@@ -9,7 +9,7 @@ spec:
     namespace: object-detection
   source:
     repoURL: 'https://github.com/shpaz/rhods-object-detection-preparation.git'
-    path: '/'
+    path: 'manifests'
     targetRevision: 'main'
   project: default
   syncPolicy:
