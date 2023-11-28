@@ -1,0 +1,18 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  annotations:
+    openshift.io/description: 'Object Detection Persistent Volume'
+    openshift.io/display-name: object-detection-pvc 
+  name: object-detection
+  namespace: object-detection
+  labels:
+    opendatahub.io/dashboard: 'true'
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  volumeMode: Filesystem
+

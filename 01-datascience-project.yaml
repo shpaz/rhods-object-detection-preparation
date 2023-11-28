@@ -1,0 +1,9 @@
+kind: Project
+apiVersion: project.openshift.io/v1
+metadata:
+  name: object-detection
+  labels:
+    kubernetes.io/metadata.name: object-detection
+    modelmesh-enabled: 'true'
+    opendatahub.io/dashboard: 'true'
+

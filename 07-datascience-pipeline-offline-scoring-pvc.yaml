@@ -1,0 +1,18 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  annotations:
+    openshift.io/description: 'Offline Scoring Persistent Volume'
+    openshift.io/display-name: offline-scoring-pvc
+  name: offline-scoring-pvc
+  namespace: object-detection
+  labels:
+    opendatahub.io/dashboard: 'true'
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  volumeMode: Filesystem
+
