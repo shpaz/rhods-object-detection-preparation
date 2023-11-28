@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: object-detection-demo
+  namespace: openshift-gitops
+spec:
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: object-detection
+  source:
+    repoURL: 'https://github.com/shpaz/rhods-object-detection-preparation.git'
+    path: '/'
+    targetRevision: 'main'
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+  sourceType: Git
