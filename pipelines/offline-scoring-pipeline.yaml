@@ -1,0 +1,448 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: offline-scoring
+  annotations:
+    tekton.dev/output_artifacts: '{"run-a-file": [{"key": "artifacts/$PIPELINERUN/run-a-file/mlpipeline-metrics.tgz",
+      "name": "mlpipeline-metrics", "path": "/tmp/mlpipeline-metrics.json"}, {"key":
+      "artifacts/$PIPELINERUN/run-a-file/mlpipeline-ui-metadata.tgz", "name": "mlpipeline-ui-metadata",
+      "path": "/tmp/mlpipeline-ui-metadata.json"}], "run-a-file-2": [{"key": "artifacts/$PIPELINERUN/run-a-file-2/mlpipeline-metrics.tgz",
+      "name": "mlpipeline-metrics", "path": "/tmp/mlpipeline-metrics.json"}, {"key":
+      "artifacts/$PIPELINERUN/run-a-file-2/mlpipeline-ui-metadata.tgz", "name": "mlpipeline-ui-metadata",
+      "path": "/tmp/mlpipeline-ui-metadata.json"}], "run-a-file-3": [{"key": "artifacts/$PIPELINERUN/run-a-file-3/mlpipeline-metrics.tgz",
+      "name": "mlpipeline-metrics", "path": "/tmp/mlpipeline-metrics.json"}, {"key":
+      "artifacts/$PIPELINERUN/run-a-file-3/mlpipeline-ui-metadata.tgz", "name": "mlpipeline-ui-metadata",
+      "path": "/tmp/mlpipeline-ui-metadata.json"}], "run-a-file-4": [{"key": "artifacts/$PIPELINERUN/run-a-file-4/mlpipeline-metrics.tgz",
+      "name": "mlpipeline-metrics", "path": "/tmp/mlpipeline-metrics.json"}, {"key":
+      "artifacts/$PIPELINERUN/run-a-file-4/mlpipeline-ui-metadata.tgz", "name": "mlpipeline-ui-metadata",
+      "path": "/tmp/mlpipeline-ui-metadata.json"}], "run-a-file-5": [{"key": "artifacts/$PIPELINERUN/run-a-file-5/mlpipeline-metrics.tgz",
+      "name": "mlpipeline-metrics", "path": "/tmp/mlpipeline-metrics.json"}, {"key":
+      "artifacts/$PIPELINERUN/run-a-file-5/mlpipeline-ui-metadata.tgz", "name": "mlpipeline-ui-metadata",
+      "path": "/tmp/mlpipeline-ui-metadata.json"}]}'
+    tekton.dev/input_artifacts: '{}'
+    tekton.dev/artifact_bucket: mlpipeline
+    tekton.dev/artifact_endpoint: minio-service.kubeflow:9000
+    tekton.dev/artifact_endpoint_scheme: http://
+    tekton.dev/artifact_items: '{"run-a-file": [["mlpipeline-metrics", "/tmp/mlpipeline-metrics.json"],
+      ["mlpipeline-ui-metadata", "/tmp/mlpipeline-ui-metadata.json"]], "run-a-file-2":
+      [["mlpipeline-metrics", "/tmp/mlpipeline-metrics.json"], ["mlpipeline-ui-metadata",
+      "/tmp/mlpipeline-ui-metadata.json"]], "run-a-file-3": [["mlpipeline-metrics",
+      "/tmp/mlpipeline-metrics.json"], ["mlpipeline-ui-metadata", "/tmp/mlpipeline-ui-metadata.json"]],
+      "run-a-file-4": [["mlpipeline-metrics", "/tmp/mlpipeline-metrics.json"], ["mlpipeline-ui-metadata",
+      "/tmp/mlpipeline-ui-metadata.json"]], "run-a-file-5": [["mlpipeline-metrics",
+      "/tmp/mlpipeline-metrics.json"], ["mlpipeline-ui-metadata", "/tmp/mlpipeline-ui-metadata.json"]]}'
+    sidecar.istio.io/inject: "false"
+    tekton.dev/template: ''
+    pipelines.kubeflow.org/big_data_passing_format: $(workspaces.$TASK_NAME.path)/artifacts/$ORIG_PR_NAME/$TASKRUN_NAME/$TASK_PARAM_NAME
+    pipelines.kubeflow.org/pipeline_spec: '{"inputs": [{"name": "class_labels", "optional":
+      true, "type": "String"}], "name": "offline-scoring"}'
+  labels:
+    pipelines.kubeflow.org/pipelinename: ''
+    pipelines.kubeflow.org/generation: ''
+spec:
+  params:
+  - name: class_labels
+    value: ''
+  pipelineSpec:
+    params:
+    - name: class_labels
+    tasks:
+    - name: run-a-file
+      taskSpec:
+        steps:
+        - name: main
+          args:
+          - |
+            sh -c "mkdir -p ./jupyter-work-dir && cd ./jupyter-work-dir"
+            sh -c "echo 'Downloading https://raw.githubusercontent.com/elyra-ai/elyra/v3.15.0/elyra/kfp/bootstrapper.py' && curl --fail -H 'Cache-Control: no-cache' -L https://raw.githubusercontent.com/elyra-ai/elyra/v3.15.0/elyra/kfp/bootstrapper.py --output bootstrapper.py"
+            sh -c "echo 'Downloading https://raw.githubusercontent.com/elyra-ai/elyra/v3.15.0/etc/generic/requirements-elyra.txt' && curl --fail -H 'Cache-Control: no-cache' -L https://raw.githubusercontent.com/elyra-ai/elyra/v3.15.0/etc/generic/requirements-elyra.txt --output requirements-elyra.txt"
+            sh -c "python3 -m pip install  packaging && python3 -m pip freeze > requirements-current.txt && python3 bootstrapper.py --pipeline-name 'offline-scoring' --cos-endpoint 'https://s3.us-east-1.amazonaws.com' --cos-bucket 'dspipelines' --cos-directory 'offline-scoring-1031173906' --cos-dependencies-archive 'data_ingestion-022ba1c7-40a2-43c7-bf25-8d0f58cd6a4b.tar.gz' --file 'object-detection-rest/data_ingestion.py' "
+          command:
+          - sh
+          - -c
+          env:
+          - name: ELYRA_RUNTIME_ENV
+            value: kfp
+          - name: AWS_ACCESS_KEY_ID
+            value: AKIA2QSHPVVJJRDFPFH6
+          - name: AWS_SECRET_ACCESS_KEY
+            value: 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
+          - name: ELYRA_ENABLE_PIPELINE_INFO
+            value: "True"
+          - name: ELYRA_WRITABLE_CONTAINER_DIR
+            value: /tmp
+          - name: ELYRA_RUN_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.annotations['pipelines.kubeflow.org/run_name']
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                key: AWS_SECRET_ACCESS_KEY
+                name: aws-connection-object-detection
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                key: AWS_ACCESS_KEY_ID
+                name: aws-connection-object-detection
+          - name: AWS_S3_BUCKET
+            valueFrom:
+              secretKeyRef:
+                key: AWS_S3_BUCKET
+                name: aws-connection-object-detection
+          - name: AWS_S3_ENDPOINT
+            valueFrom:
+              secretKeyRef:
+                key: AWS_S3_ENDPOINT
+                name: aws-connection-object-detection
+          image: quay.io/mmurakam/runtimes:object-detection-v1.0.5
+          volumeMounts:
+          - mountPath: /data
+            name: offline-scoring-pvc
+            readOnly: false
+        stepTemplate:
+          volumeMounts:
+          - name: mlpipeline-metrics
+            mountPath: /tmp
+        volumes:
+        - name: mlpipeline-metrics
+          emptyDir: {}
+        - name: offline-scoring-pvc
+          persistentVolumeClaim:
+            claimName: offline-scoring-pvc
+        metadata:
+          labels:
+            elyra/node-type: notebook-script
+            elyra/pipeline-name: offline-scoring
+            elyra/pipeline-version: ''
+            elyra/experiment-name: ''
+            elyra/node-name: data_ingestion
+            pipelines.kubeflow.org/cache_enabled: "true"
+          annotations:
+            elyra/node-file-name: object-detection-rest/data_ingestion.py
+            elyra/pipeline-source: offline-scoring.pipeline
+            pipelines.kubeflow.org/task_display_name: data_ingestion
+            pipelines.kubeflow.org/component_spec_digest: '{"name": "Run a file",
+              "outputs": [], "version": "Run a file@sha256=5e3af547dc46408ecbe9f94a99a8e35b2d764afd1fa00e8c9c5a1143735592a0"}'
+    - name: run-a-file-2
+      taskSpec:
+        steps:
+        - name: main
+          args:
+          - |
+            sh -c "mkdir -p ./jupyter-work-dir && cd ./jupyter-work-dir"
+            sh -c "echo 'Downloading https://raw.githubusercontent.com/elyra-ai/elyra/v3.15.0/elyra/kfp/bootstrapper.py' && curl --fail -H 'Cache-Control: no-cache' -L https://raw.githubusercontent.com/elyra-ai/elyra/v3.15.0/elyra/kfp/bootstrapper.py --output bootstrapper.py"
+            sh -c "echo 'Downloading https://raw.githubusercontent.com/elyra-ai/elyra/v3.15.0/etc/generic/requirements-elyra.txt' && curl --fail -H 'Cache-Control: no-cache' -L https://raw.githubusercontent.com/elyra-ai/elyra/v3.15.0/etc/generic/requirements-elyra.txt --output requirements-elyra.txt"
+            sh -c "python3 -m pip install  packaging && python3 -m pip freeze > requirements-current.txt && python3 bootstrapper.py --pipeline-name 'offline-scoring' --cos-endpoint 'https://s3.us-east-1.amazonaws.com' --cos-bucket 'dspipelines' --cos-directory 'offline-scoring-1031173906' --cos-dependencies-archive 'preprocessing-e5dceea6-7a41-4700-b403-9dcba54a6af6.tar.gz' --file 'object-detection-rest/preprocessing.py' "
+          command:
+          - sh
+          - -c
+          env:
+          - name: ELYRA_RUNTIME_ENV
+            value: kfp
+          - name: AWS_ACCESS_KEY_ID
+            value: AKIA2QSHPVVJJRDFPFH6
+          - name: AWS_SECRET_ACCESS_KEY
+            value: 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
+          - name: ELYRA_ENABLE_PIPELINE_INFO
+            value: "True"
+          - name: ELYRA_WRITABLE_CONTAINER_DIR
+            value: /tmp
+          - name: ELYRA_RUN_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.annotations['pipelines.kubeflow.org/run_name']
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                key: AWS_SECRET_ACCESS_KEY
+                name: aws-connection-object-detection
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                key: AWS_ACCESS_KEY_ID
+                name: aws-connection-object-detection
+          - name: AWS_S3_BUCKET
+            valueFrom:
+              secretKeyRef:
+                key: AWS_S3_BUCKET
+                name: aws-connection-object-detection
+          - name: AWS_S3_ENDPOINT
+            valueFrom:
+              secretKeyRef:
+                key: AWS_S3_ENDPOINT
+                name: aws-connection-object-detection
+          image: quay.io/mmurakam/runtimes:object-detection-v1.0.5
+          volumeMounts:
+          - mountPath: /data
+            name: offline-scoring-pvc
+            readOnly: false
+        stepTemplate:
+          volumeMounts:
+          - name: mlpipeline-metrics
+            mountPath: /tmp
+        volumes:
+        - name: mlpipeline-metrics
+          emptyDir: {}
+        - name: offline-scoring-pvc
+          persistentVolumeClaim:
+            claimName: offline-scoring-pvc
+        metadata:
+          labels:
+            elyra/node-type: notebook-script
+            elyra/pipeline-name: offline-scoring
+            elyra/pipeline-version: ''
+            elyra/experiment-name: ''
+            elyra/node-name: preprocessing
+            pipelines.kubeflow.org/cache_enabled: "true"
+          annotations:
+            elyra/node-file-name: object-detection-rest/preprocessing.py
+            elyra/pipeline-source: offline-scoring.pipeline
+            pipelines.kubeflow.org/task_display_name: preprocessing
+            pipelines.kubeflow.org/component_spec_digest: '{"name": "Run a file",
+              "outputs": [], "version": "Run a file@sha256=33b9a00684ac7a3dd0b69d3d66c48b39ab61594204cf10e1d4f3ae8839d9bcf5"}'
+      runAfter:
+      - run-a-file
+    - name: run-a-file-3
+      taskSpec:
+        steps:
+        - name: main
+          args:
+          - |
+            sh -c "mkdir -p ./jupyter-work-dir && cd ./jupyter-work-dir"
+            sh -c "echo 'Downloading https://raw.githubusercontent.com/elyra-ai/elyra/v3.15.0/elyra/kfp/bootstrapper.py' && curl --fail -H 'Cache-Control: no-cache' -L https://raw.githubusercontent.com/elyra-ai/elyra/v3.15.0/elyra/kfp/bootstrapper.py --output bootstrapper.py"
+            sh -c "echo 'Downloading https://raw.githubusercontent.com/elyra-ai/elyra/v3.15.0/etc/generic/requirements-elyra.txt' && curl --fail -H 'Cache-Control: no-cache' -L https://raw.githubusercontent.com/elyra-ai/elyra/v3.15.0/etc/generic/requirements-elyra.txt --output requirements-elyra.txt"
+            sh -c "python3 -m pip install  packaging && python3 -m pip freeze > requirements-current.txt && python3 bootstrapper.py --pipeline-name 'offline-scoring' --cos-endpoint 'https://s3.us-east-1.amazonaws.com' --cos-bucket 'dspipelines' --cos-directory 'offline-scoring-1031173906' --cos-dependencies-archive 'model_loading-160028ad-0373-4d3a-b9d4-49a2f57c4bbe.tar.gz' --file 'object-detection-rest/model_loading.py' --outputs 'model.onnx' "
+          command:
+          - sh
+          - -c
+          env:
+          - name: ELYRA_RUNTIME_ENV
+            value: kfp
+          - name: AWS_ACCESS_KEY_ID
+            value: AKIA2QSHPVVJJRDFPFH6
+          - name: AWS_SECRET_ACCESS_KEY
+            value: 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
+          - name: ELYRA_ENABLE_PIPELINE_INFO
+            value: "True"
+          - name: ELYRA_WRITABLE_CONTAINER_DIR
+            value: /tmp
+          - name: ELYRA_RUN_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.annotations['pipelines.kubeflow.org/run_name']
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                key: AWS_SECRET_ACCESS_KEY
+                name: aws-connection-object-detection
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                key: AWS_ACCESS_KEY_ID
+                name: aws-connection-object-detection
+          - name: AWS_S3_BUCKET
+            valueFrom:
+              secretKeyRef:
+                key: AWS_S3_BUCKET
+                name: aws-connection-object-detection
+          - name: AWS_S3_ENDPOINT
+            valueFrom:
+              secretKeyRef:
+                key: AWS_S3_ENDPOINT
+                name: aws-connection-object-detection
+          image: quay.io/mmurakam/runtimes:object-detection-v1.0.5
+          volumeMounts:
+          - mountPath: /data
+            name: offline-scoring-pvc
+            readOnly: false
+        stepTemplate:
+          volumeMounts:
+          - name: mlpipeline-metrics
+            mountPath: /tmp
+        volumes:
+        - name: mlpipeline-metrics
+          emptyDir: {}
+        - name: offline-scoring-pvc
+          persistentVolumeClaim:
+            claimName: offline-scoring-pvc
+        metadata:
+          labels:
+            elyra/node-type: notebook-script
+            elyra/pipeline-name: offline-scoring
+            elyra/pipeline-version: ''
+            elyra/experiment-name: ''
+            elyra/node-name: model_loading
+            pipelines.kubeflow.org/cache_enabled: "true"
+          annotations:
+            elyra/node-file-name: object-detection-rest/model_loading.py
+            elyra/pipeline-source: offline-scoring.pipeline
+            pipelines.kubeflow.org/task_display_name: model_loading
+            pipelines.kubeflow.org/component_spec_digest: '{"name": "Run a file",
+              "outputs": [], "version": "Run a file@sha256=b905f1e82e5c50ce06e52219ee7865c85863439bc52bebce3e42f082e33a391e"}'
+    - name: run-a-file-4
+      params:
+      - name: class_labels
+        value: $(params.class_labels)
+      taskSpec:
+        steps:
+        - name: main
+          args:
+          - |
+            class_labels="$0"
+            sh -c "mkdir -p ./jupyter-work-dir && cd ./jupyter-work-dir"
+            sh -c "echo 'Downloading https://raw.githubusercontent.com/elyra-ai/elyra/v3.15.0/elyra/kfp/bootstrapper.py' && curl --fail -H 'Cache-Control: no-cache' -L https://raw.githubusercontent.com/elyra-ai/elyra/v3.15.0/elyra/kfp/bootstrapper.py --output bootstrapper.py"
+            sh -c "echo 'Downloading https://raw.githubusercontent.com/elyra-ai/elyra/v3.15.0/etc/generic/requirements-elyra.txt' && curl --fail -H 'Cache-Control: no-cache' -L https://raw.githubusercontent.com/elyra-ai/elyra/v3.15.0/etc/generic/requirements-elyra.txt --output requirements-elyra.txt"
+            sh -c "python3 -m pip install  packaging && python3 -m pip freeze > requirements-current.txt && python3 bootstrapper.py --pipeline-name 'offline-scoring' --cos-endpoint 'https://s3.us-east-1.amazonaws.com' --cos-bucket 'dspipelines' --cos-directory 'offline-scoring-1031173906' --cos-dependencies-archive 'scoring-b1de295b-59f5-4dda-82bf-e6d2bf0503eb.tar.gz' --file 'object-detection-rest/scoring.py' --inputs 'model.onnx' --pipeline-parameters 'class_labels=$class_labels' --parameter-pass-method 'env' "
+          - $(inputs.params.class_labels)
+          command:
+          - sh
+          - -c
+          env:
+          - name: ELYRA_RUNTIME_ENV
+            value: kfp
+          - name: AWS_ACCESS_KEY_ID
+            value: AKIA2QSHPVVJJRDFPFH6
+          - name: AWS_SECRET_ACCESS_KEY
+            value: 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
+          - name: ELYRA_ENABLE_PIPELINE_INFO
+            value: "True"
+          - name: ELYRA_WRITABLE_CONTAINER_DIR
+            value: /tmp
+          - name: ELYRA_RUN_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.annotations['pipelines.kubeflow.org/run_name']
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                key: AWS_SECRET_ACCESS_KEY
+                name: aws-connection-object-detection
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                key: AWS_ACCESS_KEY_ID
+                name: aws-connection-object-detection
+          - name: AWS_S3_BUCKET
+            valueFrom:
+              secretKeyRef:
+                key: AWS_S3_BUCKET
+                name: aws-connection-object-detection
+          - name: AWS_S3_ENDPOINT
+            valueFrom:
+              secretKeyRef:
+                key: AWS_S3_ENDPOINT
+                name: aws-connection-object-detection
+          image: quay.io/mmurakam/runtimes:object-detection-v1.0.5
+          volumeMounts:
+          - mountPath: /data
+            name: offline-scoring-pvc
+            readOnly: false
+        params:
+        - name: class_labels
+        stepTemplate:
+          volumeMounts:
+          - name: mlpipeline-metrics
+            mountPath: /tmp
+        volumes:
+        - name: mlpipeline-metrics
+          emptyDir: {}
+        - name: offline-scoring-pvc
+          persistentVolumeClaim:
+            claimName: offline-scoring-pvc
+        metadata:
+          labels:
+            elyra/node-type: notebook-script
+            elyra/pipeline-name: offline-scoring
+            elyra/pipeline-version: ''
+            elyra/experiment-name: ''
+            elyra/node-name: scoring
+            pipelines.kubeflow.org/cache_enabled: "true"
+          annotations:
+            elyra/node-file-name: object-detection-rest/scoring.py
+            elyra/pipeline-source: offline-scoring.pipeline
+            pipelines.kubeflow.org/task_display_name: scoring
+            pipelines.kubeflow.org/component_spec_digest: '{"name": "Run a file",
+              "outputs": [], "version": "Run a file@sha256=581ca06df8ccd23366edbbe12ce24caa0579ec5bbcd2c9887d6c9d509b7d24b4"}'
+      runAfter:
+      - run-a-file-2
+      - run-a-file-3
+    - name: run-a-file-5
+      taskSpec:
+        steps:
+        - name: main
+          args:
+          - |
+            sh -c "mkdir -p ./jupyter-work-dir && cd ./jupyter-work-dir"
+            sh -c "echo 'Downloading https://raw.githubusercontent.com/elyra-ai/elyra/v3.15.0/elyra/kfp/bootstrapper.py' && curl --fail -H 'Cache-Control: no-cache' -L https://raw.githubusercontent.com/elyra-ai/elyra/v3.15.0/elyra/kfp/bootstrapper.py --output bootstrapper.py"
+            sh -c "echo 'Downloading https://raw.githubusercontent.com/elyra-ai/elyra/v3.15.0/etc/generic/requirements-elyra.txt' && curl --fail -H 'Cache-Control: no-cache' -L https://raw.githubusercontent.com/elyra-ai/elyra/v3.15.0/etc/generic/requirements-elyra.txt --output requirements-elyra.txt"
+            sh -c "python3 -m pip install  packaging && python3 -m pip freeze > requirements-current.txt && python3 bootstrapper.py --pipeline-name 'offline-scoring' --cos-endpoint 'https://s3.us-east-1.amazonaws.com' --cos-bucket 'dspipelines' --cos-directory 'offline-scoring-1031173906' --cos-dependencies-archive 'results_upload-f2d05ef8-3d14-4a0b-bc72-13097acd8f22.tar.gz' --file 'object-detection-rest/results_upload.py' --inputs 'model.onnx' "
+          command:
+          - sh
+          - -c
+          env:
+          - name: ELYRA_RUNTIME_ENV
+            value: kfp
+          - name: AWS_ACCESS_KEY_ID
+            value: AKIA2QSHPVVJJRDFPFH6
+          - name: AWS_SECRET_ACCESS_KEY
+            value: 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
+          - name: ELYRA_ENABLE_PIPELINE_INFO
+            value: "True"
+          - name: ELYRA_WRITABLE_CONTAINER_DIR
+            value: /tmp
+          - name: ELYRA_RUN_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.annotations['pipelines.kubeflow.org/run_name']
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                key: AWS_SECRET_ACCESS_KEY
+                name: aws-connection-object-detection
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                key: AWS_ACCESS_KEY_ID
+                name: aws-connection-object-detection
+          - name: AWS_S3_BUCKET
+            valueFrom:
+              secretKeyRef:
+                key: AWS_S3_BUCKET
+                name: aws-connection-object-detection
+          - name: AWS_S3_ENDPOINT
+            valueFrom:
+              secretKeyRef:
+                key: AWS_S3_ENDPOINT
+                name: aws-connection-object-detection
+          image: quay.io/mmurakam/runtimes:object-detection-v1.0.5
+          volumeMounts:
+          - mountPath: /data
+            name: offline-scoring-pvc
+            readOnly: false
+        stepTemplate:
+          volumeMounts:
+          - name: mlpipeline-metrics
+            mountPath: /tmp
+        volumes:
+        - name: mlpipeline-metrics
+          emptyDir: {}
+        - name: offline-scoring-pvc
+          persistentVolumeClaim:
+            claimName: offline-scoring-pvc
+        metadata:
+          labels:
+            elyra/node-type: notebook-script
+            elyra/pipeline-name: offline-scoring
+            elyra/pipeline-version: ''
+            elyra/experiment-name: ''
+            elyra/node-name: results_upload
+            pipelines.kubeflow.org/cache_enabled: "true"
+          annotations:
+            elyra/node-file-name: object-detection-rest/results_upload.py
+            elyra/pipeline-source: offline-scoring.pipeline
+            pipelines.kubeflow.org/task_display_name: results_upload
+            pipelines.kubeflow.org/component_spec_digest: '{"name": "Run a file",
+              "outputs": [], "version": "Run a file@sha256=13350b6fdb1f30c98e2ce630a0aee45c451177836eab5a5394dba99ac091884d"}'
+      runAfter:
+      - run-a-file-4
