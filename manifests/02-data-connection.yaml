@@ -10,10 +10,10 @@ metadata:
     opendatahub.io/connection-type: s3
     openshift.io/display-name: object-detection
 data:
-  AWS_ACCESS_KEY_ID: QUtJQTJRU0hQVlZKRjVaUlFMV08=
+  AWS_ACCESS_KEY_ID: =
   AWS_DEFAULT_REGION: dXMtZWFzdC0x
-  AWS_S3_BUCKET: ZHNwaXBlbGluZXM=
+  AWS_S3_BUCKET: =
   AWS_S3_ENDPOINT: aHR0cHM6Ly9zMy51cy1lYXN0LTEuYW1hem9uYXdzLmNvbQ==
-  AWS_SECRET_ACCESS_KEY: Vk10VWsxQjg4Z1BrNXJEWmxodFJPTTgrVjVVck01SU9KQ1pLR04vVg==
+  AWS_SECRET_ACCESS_KEY: ==
 type: Opaque
 
